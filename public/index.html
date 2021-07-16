@@ -1,0 +1,55 @@
+<html>
+    <body>
+        <textarea id="input" onkeypress="if(window.event.keyCode == 13){window.event.preventDefault();send()}"></textarea>
+        <br>
+        <textarea id="console"></textarea>
+
+        <style>
+            textarea{
+                width: 100%;
+            }
+            /* #input{} */
+            #console{
+                height: 90%;
+            }
+            *{
+                font-size: 16px;
+				background-color:black;
+				color:white;
+            }
+        </style>
+        <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
+        <script>
+            const input = document.getElementById("input"),
+            WSconsole = document.getElementById("console");
+            var ws;
+            var key_256 = [228, 117, 72, 79, 9, 55, 197, 218, 148, 48, 60, 11, 155, 190, 139, 240, 107, 208, 98, 37, 218, 229, 137, 133, 75, 4, 53, 211, 213, 137, 219, 236];
+            var counterNum = key_256[0];
+            var aes = new aesjs.ModeOfOperation.ctr(key_256, new aesjs.Counter(counterNum));
+
+            function connect(){
+                ws = new WebSocket("ws://localhost:3000");
+                ws.onmessage = receive;
+            }
+            connect();
+
+            ws.onmessage = receive;
+            function send(){
+                let text = input.value;
+                input.value = "";
+                ws.send(sendAES(text));
+                WSconsole.value += "-> " + text + "\n";
+            }
+            function receive(event){
+                WSconsole.value += "<-" + receiveAES(event.data) + "\n";
+            }
+
+            function sendAES(text, key = key_256){
+	            return aesjs.utils.hex.fromBytes(aes.encrypt(aesjs.utils.utf8.toBytes(text)));
+            }
+            function receiveAES(text, key = key_256){
+                return aesjs.utils.utf8.fromBytes(aes.decrypt(aesjs.utils.hex.toBytes(text)));
+            }
+        </script>
+    </body>
+</html>
